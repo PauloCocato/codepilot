@@ -1,0 +1,14 @@
+{
+  "number": 150,
+  "title": "Add dark mode support to dashboard",
+  "body": "## Feature Request\n\nIt would be great to have a dark mode toggle in the dashboard.\n\n## Motivation\n\nMany users prefer dark mode, especially when working at night. This would improve the user experience significantly.\n\n## Proposed Implementation\n\nAdd a theme toggle component that switches between light and dark CSS variables.\n\nFiles to modify:\n- `src/components/theme-toggle.tsx`\n- `src/styles/variables.css`\n- `src/hooks/use-theme.ts`\n\n```tsx\nfunction ThemeToggle() {\n  const { theme, setTheme } = useTheme();\n  return <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme}</button>;\n}\n```\n\n## Alternatives\n\nWe could use `@media (prefers-color-scheme: dark)` but a manual toggle gives more control.",
+  "labels": [
+    { "id": 3, "name": "enhancement" },
+    { "id": 4, "name": "ui" }
+  ],
+  "state": "open",
+  "user": {
+    "login": "featureuser",
+    "id": 11111
+  }
+}

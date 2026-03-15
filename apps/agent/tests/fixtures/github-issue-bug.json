@@ -1,0 +1,14 @@
+{
+  "number": 42,
+  "title": "Login form crashes when email contains special characters",
+  "body": "## Description\n\nThe login form crashes when a user enters an email with special characters like `+` or `%`.\n\nThe error occurs in `src/auth/login-handler.ts` and `src/utils/validator.ts`.\n\n## Steps to Reproduce\n\n1. Open the login page\n2. Enter email: `test+user@example.com`\n3. Click \"Sign In\"\n4. App crashes with TypeError\n\n## Expected Behavior\n\nThe login should work with any valid email format including special characters.\n\n## Actual Behavior\n\nThe app throws a `TypeError: Cannot read properties of undefined (reading 'split')` error.\n\n## Code\n\n```typescript\n// This is the problematic code\nfunction validateEmail(email: string) {\n  const parts = email.split('@');\n  return parts[1].split('.').length >= 2;\n}\n```\n\n## Environment\n\n- TypeScript 5.3\n- Node.js 20\n- React 18",
+  "labels": [
+    { "id": 1, "name": "bug" },
+    { "id": 2, "name": "priority: high" }
+  ],
+  "state": "open",
+  "user": {
+    "login": "testuser",
+    "id": 12345
+  }
+}
