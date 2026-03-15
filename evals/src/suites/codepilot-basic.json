@@ -1,0 +1,107 @@
+{
+  "name": "codepilot-basic",
+  "description": "Basic evaluation suite using the internal test-repo with 10 simulated cases covering bugs, features, refactoring and docs.",
+  "cases": [
+    {
+      "id": "basic-001",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 1,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#1",
+      "title": "Fix divide by zero — should throw instead of returning Infinity",
+      "difficulty": "easy",
+      "category": "bug",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-002",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 2,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#2",
+      "title": "Add modulo function to math module",
+      "difficulty": "easy",
+      "category": "feature",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-003",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 3,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#3",
+      "title": "Add power function to math module",
+      "difficulty": "easy",
+      "category": "feature",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-004",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 4,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#4",
+      "title": "Fix subtract with negative numbers — incorrect sign handling",
+      "difficulty": "easy",
+      "category": "bug",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-005",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 5,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#5",
+      "title": "Add input validation to all math functions",
+      "difficulty": "medium",
+      "category": "refactor",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-006",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 6,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#6",
+      "title": "Add JSDoc documentation to all exported functions",
+      "difficulty": "easy",
+      "category": "docs",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-007",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 7,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#7",
+      "title": "Add floor division function to math module",
+      "difficulty": "easy",
+      "category": "feature",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-008",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 8,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#8",
+      "title": "Fix multiply overflow for large numbers — add safe multiply",
+      "difficulty": "medium",
+      "category": "bug",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-009",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 9,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#9",
+      "title": "Add comprehensive error handling to all math operations",
+      "difficulty": "medium",
+      "category": "refactor",
+      "expectedFiles": ["src/math.ts"]
+    },
+    {
+      "id": "basic-010",
+      "repo": "local:apps/agent/tests/e2e/test-repo",
+      "issueNumber": 10,
+      "issueUrl": "local:apps/agent/tests/e2e/test-repo#10",
+      "title": "Add type guards for input validation in math module",
+      "difficulty": "medium",
+      "category": "feature",
+      "expectedFiles": ["src/math.ts"]
+    }
+  ],
+  "createdAt": "2026-03-15T00:00:00.000Z"
+}
