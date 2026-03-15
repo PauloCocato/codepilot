@@ -1,0 +1,4 @@
+# Ignore generated reports
+*.md
+*.json
+!.gitkeep
