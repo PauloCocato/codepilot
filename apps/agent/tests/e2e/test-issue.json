@@ -1,0 +1,6 @@
+{
+  "number": 1,
+  "title": "Bug: divide function doesn't handle division by zero",
+  "body": "## Bug Report\n\nThe `divide` function in `src/math.ts` returns `Infinity` when dividing by zero instead of throwing an error.\n\n## Steps to Reproduce\n1. Call `divide(10, 0)`\n2. Returns `Infinity` instead of throwing\n\n## Expected Behavior\nShould throw an Error with message 'Division by zero'\n\n## Actual Behavior\nReturns `Infinity`",
+  "labels": ["bug", "codepilot"]
+}
