@@ -58,3 +58,25 @@ export type {
 } from "./app.js";
 
 export { WebhookQueueAdapter } from "./queue-adapter.js";
+
+export {
+  registerRepo,
+  getRepo,
+  listRepos,
+  unregisterRepo,
+  refreshRepoConfig,
+  clearRegistry,
+  RepoRegistryError,
+} from "./repo-registry.js";
+export type { RepoInfo } from "./repo-registry.js";
+
+export {
+  canProcessRepo,
+  acquireSlot,
+  releaseSlot,
+  getRepoStats,
+  configureRateLimits,
+  clearRateLimitCounters,
+  DEFAULT_RATE_LIMIT_CONFIG,
+} from "./rate-limiter.js";
+export type { RateLimitConfig } from "./rate-limiter.js";

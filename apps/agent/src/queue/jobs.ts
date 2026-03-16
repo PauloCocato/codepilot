@@ -16,6 +16,9 @@ export const ResolveIssueJobSchema = z.object({
   issueNumber: z.number().int().positive(),
   triggeredBy: z.enum(["webhook", "manual", "api"]),
   installationId: z.number().int().positive(),
+  maxCostUsd: z.number().positive().optional(),
+  excludedPaths: z.array(z.string()).optional(),
+  triggerLabel: z.string().optional(),
 });
 
 /** Validated job data type */

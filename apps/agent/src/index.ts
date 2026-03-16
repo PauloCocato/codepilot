@@ -14,6 +14,8 @@ import {
 import { createWebhookHandler } from "./github/app.js";
 import { registry } from "./metrics/index.js";
 import { WebhookQueueAdapter } from "./github/queue-adapter.js";
+import { listRepos, getRepo } from "./github/repo-registry.js";
+import { getRepoStats } from "./github/rate-limiter.js";
 
 const app = Fastify({
   logger: false,
@@ -181,6 +183,43 @@ app.get<{ Querystring: { limit?: string } }>(
   async (request) => {
     const limit = Number(request.query.limit ?? 20);
     return getRecentJobs(limit);
+  },
+);
+
+// --- Repo management routes ---
+
+app.get("/api/repos", async () => {
+  const repos = listRepos();
+  return repos.map((r) => ({
+    owner: r.owner,
+    repo: r.repo,
+    installationId: r.installationId,
+    config: r.config,
+    lastIndexedAt: r.lastIndexedAt ?? null,
+    stats: getRepoStats(r.owner, r.repo),
+  }));
+});
+
+app.get<{ Params: { owner: string; repo: string } }>(
+  "/api/repos/:owner/:repo",
+  async (request, reply) => {
+    const { owner, repo } = request.params;
+    const info = getRepo(owner, repo);
+
+    if (!info) {
+      return reply
+        .status(404)
+        .send({ error: `Repo ${owner}/${repo} not found` });
+    }
+
+    return {
+      owner: info.owner,
+      repo: info.repo,
+      installationId: info.installationId,
+      config: info.config,
+      lastIndexedAt: info.lastIndexedAt ?? null,
+      stats: getRepoStats(owner, repo),
+    };
   },
 );
 
