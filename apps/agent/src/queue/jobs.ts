@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /** Queue name constant */
-export const QUEUE_NAME = 'codepilot-resolve' as const;
+export const QUEUE_NAME = "codepilot-resolve" as const;
 
 /** Job name constants */
 export const JOB_NAMES = {
-  RESOLVE_ISSUE: 'resolve-issue',
+  RESOLVE_ISSUE: "resolve-issue",
 } as const;
 
 /** Schema for ResolveIssueJob data */
@@ -14,7 +14,8 @@ export const ResolveIssueJobSchema = z.object({
   repoOwner: z.string().min(1),
   repoName: z.string().min(1),
   issueNumber: z.number().int().positive(),
-  triggeredBy: z.enum(['webhook', 'manual', 'api']),
+  triggeredBy: z.enum(["webhook", "manual", "api"]),
+  installationId: z.number().int().positive(),
 });
 
 /** Validated job data type */
@@ -34,7 +35,9 @@ export interface ResolveIssueResult {
 /** Validate job data, returns Result pattern */
 export function validateJobData(
   data: unknown,
-): { success: true; data: ResolveIssueJob } | { success: false; error: string } {
+):
+  | { success: true; data: ResolveIssueJob }
+  | { success: false; error: string } {
   const result = ResolveIssueJobSchema.safeParse(data);
   if (result.success) {
     return { success: true, data: result.data };

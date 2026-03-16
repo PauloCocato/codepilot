@@ -12,6 +12,7 @@ import {
 /** Worker processing function type */
 export type ProcessFunction = (
   issueUrl: string,
+  installationId: number,
 ) => Promise<ResolveIssueResult>;
 
 /** Create and start the BullMQ worker */
@@ -28,11 +29,24 @@ export function createWorker(
         throw new Error(`Invalid job data: ${validation.error}`);
       }
 
-      const { issueUrl, issueNumber, repoOwner, repoName, triggeredBy } =
-        job.data;
+      const {
+        issueUrl,
+        issueNumber,
+        repoOwner,
+        repoName,
+        triggeredBy,
+        installationId,
+      } = job.data;
 
       logger.info(
-        { jobId: job.id, issueNumber, repoOwner, repoName, triggeredBy },
+        {
+          jobId: job.id,
+          issueNumber,
+          repoOwner,
+          repoName,
+          triggeredBy,
+          installationId,
+        },
         "Processing job",
       );
 
@@ -40,7 +54,7 @@ export function createWorker(
       await job.updateProgress({ step: "starting", percent: 0 });
 
       try {
-        const result = await processFn(issueUrl);
+        const result = await processFn(issueUrl, installationId);
 
         // Update progress to complete
         await job.updateProgress({ step: "done", percent: 100 });

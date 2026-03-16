@@ -1,9 +1,9 @@
-import { Webhooks } from '@octokit/webhooks';
-import { z } from 'zod';
-import { logger } from '../utils/logger.js';
+import { Webhooks } from "@octokit/webhooks";
+import { z } from "zod";
+import { logger } from "../utils/logger.js";
 
 /** Trigger reason for a webhook event */
-export type WebhookTrigger = 'issue_labeled' | 'issue_opened' | 'issue_comment';
+export type WebhookTrigger = "issue_labeled" | "issue_opened" | "issue_comment";
 
 /** Job to be added to the queue */
 export interface WebhookJob {
@@ -11,6 +11,7 @@ export interface WebhookJob {
   readonly repo: string;
   readonly issueNumber: number;
   readonly trigger: WebhookTrigger;
+  readonly installationId: number;
 }
 
 /** Queue interface for adding webhook jobs */
@@ -34,9 +35,11 @@ const webhookIssueSchema = z.object({
     number: z.number(),
     title: z.string(),
     body: z.string().nullable(),
-    labels: z.array(z.object({
-      name: z.string(),
-    })),
+    labels: z.array(
+      z.object({
+        name: z.string(),
+      }),
+    ),
   }),
   repository: z.object({
     owner: z.object({
@@ -45,9 +48,14 @@ const webhookIssueSchema = z.object({
     name: z.string(),
     full_name: z.string(),
   }),
-  label: z.object({
-    name: z.string(),
-  }).optional(),
+  installation: z.object({
+    id: z.number(),
+  }),
+  label: z
+    .object({
+      name: z.string(),
+    })
+    .optional(),
 });
 
 /** Zod schema for validating webhook comment payload */
@@ -70,10 +78,13 @@ const webhookCommentSchema = z.object({
     name: z.string(),
     full_name: z.string(),
   }),
+  installation: z.object({
+    id: z.number(),
+  }),
 });
 
-const DEFAULT_TRIGGER_LABEL = 'codepilot';
-const DEFAULT_TRIGGER_COMMAND = '/codepilot';
+const DEFAULT_TRIGGER_LABEL = "codepilot";
+const DEFAULT_TRIGGER_COMMAND = "/codepilot";
 const DEFAULT_MAX_CONCURRENT = 5;
 
 /** Track active jobs per repository for rate limiting */
@@ -109,31 +120,40 @@ export function resetActiveJobs(): void {
 
 /** Create a webhook handler that processes GitHub App events */
 export function createWebhookHandler(options: WebhookHandlerOptions): Webhooks {
-  const log = logger.child({ module: 'github-app' });
+  const log = logger.child({ module: "github-app" });
   const triggerLabel = options.triggerLabel ?? DEFAULT_TRIGGER_LABEL;
   const triggerCommand = options.triggerCommand ?? DEFAULT_TRIGGER_COMMAND;
   const maxConcurrent = options.maxConcurrentPerRepo ?? DEFAULT_MAX_CONCURRENT;
 
   const webhooks = new Webhooks({ secret: options.webhookSecret });
 
-  webhooks.on('issues.labeled', async ({ payload }) => {
+  webhooks.on("issues.labeled", async ({ payload }) => {
     const parsed = webhookIssueSchema.safeParse(payload);
     if (!parsed.success) {
-      log.warn({ errors: parsed.error.issues }, 'Invalid webhook payload for issues.labeled');
+      log.warn(
+        { errors: parsed.error.issues },
+        "Invalid webhook payload for issues.labeled",
+      );
       return;
     }
 
-    const { issue, repository, label } = parsed.data;
+    const { issue, repository, label, installation } = parsed.data;
 
     if (label?.name !== triggerLabel) {
-      log.debug({ label: label?.name, triggerLabel }, 'Ignoring label event - not trigger label');
+      log.debug(
+        { label: label?.name, triggerLabel },
+        "Ignoring label event - not trigger label",
+      );
       return;
     }
 
     const repoFullName = repository.full_name;
 
     if (isRateLimited(repoFullName, maxConcurrent)) {
-      log.warn({ repoFullName, maxConcurrent }, 'Rate limited - too many concurrent jobs for repository');
+      log.warn(
+        { repoFullName, maxConcurrent },
+        "Rate limited - too many concurrent jobs for repository",
+      );
       return;
     }
 
@@ -141,33 +161,40 @@ export function createWebhookHandler(options: WebhookHandlerOptions): Webhooks {
       owner: repository.owner.login,
       repo: repository.name,
       issueNumber: issue.number,
-      trigger: 'issue_labeled',
+      trigger: "issue_labeled",
+      installationId: installation.id,
     };
 
-    log.info({ job }, 'Queueing job for labeled issue');
+    log.info({ job }, "Queueing job for labeled issue");
     incrementActiveJobs(repoFullName);
-    await options.queue.add('process-issue', job);
+    await options.queue.add("process-issue", job);
   });
 
-  webhooks.on('issues.opened', async ({ payload }) => {
+  webhooks.on("issues.opened", async ({ payload }) => {
     const parsed = webhookIssueSchema.safeParse(payload);
     if (!parsed.success) {
-      log.warn({ errors: parsed.error.issues }, 'Invalid webhook payload for issues.opened');
+      log.warn(
+        { errors: parsed.error.issues },
+        "Invalid webhook payload for issues.opened",
+      );
       return;
     }
 
-    const { issue, repository } = parsed.data;
+    const { issue, repository, installation } = parsed.data;
 
     const hasTriggerLabel = issue.labels.some((l) => l.name === triggerLabel);
     if (!hasTriggerLabel) {
-      log.debug('Ignoring opened issue - no trigger label');
+      log.debug("Ignoring opened issue - no trigger label");
       return;
     }
 
     const repoFullName = repository.full_name;
 
     if (isRateLimited(repoFullName, maxConcurrent)) {
-      log.warn({ repoFullName, maxConcurrent }, 'Rate limited - too many concurrent jobs for repository');
+      log.warn(
+        { repoFullName, maxConcurrent },
+        "Rate limited - too many concurrent jobs for repository",
+      );
       return;
     }
 
@@ -175,32 +202,39 @@ export function createWebhookHandler(options: WebhookHandlerOptions): Webhooks {
       owner: repository.owner.login,
       repo: repository.name,
       issueNumber: issue.number,
-      trigger: 'issue_opened',
+      trigger: "issue_opened",
+      installationId: installation.id,
     };
 
-    log.info({ job }, 'Queueing job for opened issue');
+    log.info({ job }, "Queueing job for opened issue");
     incrementActiveJobs(repoFullName);
-    await options.queue.add('process-issue', job);
+    await options.queue.add("process-issue", job);
   });
 
-  webhooks.on('issue_comment.created', async ({ payload }) => {
+  webhooks.on("issue_comment.created", async ({ payload }) => {
     const parsed = webhookCommentSchema.safeParse(payload);
     if (!parsed.success) {
-      log.warn({ errors: parsed.error.issues }, 'Invalid webhook payload for issue_comment.created');
+      log.warn(
+        { errors: parsed.error.issues },
+        "Invalid webhook payload for issue_comment.created",
+      );
       return;
     }
 
-    const { issue, comment, repository } = parsed.data;
+    const { issue, comment, repository, installation } = parsed.data;
 
     if (!comment.body.includes(triggerCommand)) {
-      log.debug('Ignoring comment - no trigger command');
+      log.debug("Ignoring comment - no trigger command");
       return;
     }
 
     const repoFullName = repository.full_name;
 
     if (isRateLimited(repoFullName, maxConcurrent)) {
-      log.warn({ repoFullName, maxConcurrent }, 'Rate limited - too many concurrent jobs for repository');
+      log.warn(
+        { repoFullName, maxConcurrent },
+        "Rate limited - too many concurrent jobs for repository",
+      );
       return;
     }
 
@@ -208,15 +242,19 @@ export function createWebhookHandler(options: WebhookHandlerOptions): Webhooks {
       owner: repository.owner.login,
       repo: repository.name,
       issueNumber: issue.number,
-      trigger: 'issue_comment',
+      trigger: "issue_comment",
+      installationId: installation.id,
     };
 
-    log.info({ job, commentUser: comment.user.login }, 'Queueing job from issue comment');
+    log.info(
+      { job, commentUser: comment.user.login },
+      "Queueing job from issue comment",
+    );
     incrementActiveJobs(repoFullName);
-    await options.queue.add('process-issue', job);
+    await options.queue.add("process-issue", job);
   });
 
-  log.info('Webhook handler created');
+  log.info("Webhook handler created");
 
   return webhooks;
 }

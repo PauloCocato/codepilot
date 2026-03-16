@@ -11,8 +11,13 @@ import {
   closeSharedConnection,
   type ResolveIssueJob,
 } from "./queue/index.js";
+import { createWebhookHandler } from "./github/app.js";
+import { WebhookQueueAdapter } from "./github/queue-adapter.js";
 
-const app = Fastify({ logger: false });
+const app = Fastify({
+  logger: false,
+  bodyLimit: 1_048_576, // 1 MB for webhook payloads
+});
 
 /** In-flight runs by issue URL — prevents duplicate PRs for the same issue */
 const activeRuns = new Map<string, Promise<AgentRun>>();
@@ -86,11 +91,55 @@ app.post<{ Body: { issueUrl: string } }>(
   },
 );
 
+// --- Webhook route ---
+
+const WEBHOOK_SECRET = process.env["GITHUB_WEBHOOK_SECRET"] ?? "";
+
+/** Capture raw body for webhook signature verification */
+app.addContentTypeParser(
+  "application/json",
+  { parseAs: "string" },
+  (_request, body, done) => {
+    done(null, body);
+  },
+);
+
+const webhookQueue = new WebhookQueueAdapter();
+const webhooks = WEBHOOK_SECRET
+  ? createWebhookHandler({ webhookSecret: WEBHOOK_SECRET, queue: webhookQueue })
+  : null;
+
 app.post("/webhook", async (request, reply) => {
-  // Webhook handling is done via createWebhookHandler in the github module.
-  // This route is a placeholder for Fastify integration.
-  logger.info("Webhook received");
-  return reply.status(200).send({ received: true });
+  if (!webhooks) {
+    logger.warn("Webhook received but GITHUB_WEBHOOK_SECRET is not configured");
+    return reply.status(503).send({ error: "Webhook secret not configured" });
+  }
+
+  const id = request.headers["x-github-delivery"] as string | undefined;
+  const name = request.headers["x-github-event"] as string | undefined;
+  const signature = request.headers["x-hub-signature-256"] as
+    | string
+    | undefined;
+  const payload = request.body as string;
+
+  if (!id || !name || !signature) {
+    logger.warn(
+      { hasId: !!id, hasName: !!name, hasSignature: !!signature },
+      "Missing required webhook headers",
+    );
+    return reply.status(400).send({ error: "Missing required headers" });
+  }
+
+  try {
+    await webhooks.verifyAndReceive({ id, name, signature, payload });
+    return reply.status(200).send({ received: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error({ err: message }, "Webhook verification or processing failed");
+    return reply
+      .status(401)
+      .send({ error: "Webhook signature verification failed" });
+  }
 });
 
 // --- Queue API routes ---

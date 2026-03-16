@@ -21,6 +21,9 @@
       "login": "testorg"
     }
   },
+  "installation": {
+    "id": 12345
+  },
   "sender": {
     "login": "maintainer",
     "id": 99999
