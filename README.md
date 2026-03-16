@@ -19,10 +19,13 @@
 </p>
 
 <p align="center">
-  <a href="#-quick-start">Quick Start</a> &bull;
-  <a href="#-how-it-works">How It Works</a> &bull;
-  <a href="#-architecture">Architecture</a> &bull;
-  <a href="docs/ARCHITECTURE.md">Docs</a> &bull;
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#how-it-works">How It Works</a> &bull;
+  <a href="#architecture">Architecture</a> &bull;
+  <a href="#github-app-setup">GitHub App</a> &bull;
+  <a href="#vs-code-extension">VS Code Extension</a> &bull;
+  <a href="#deployment">Deployment</a> &bull;
+  <a href="#api-reference">API</a> &bull;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -52,6 +55,13 @@ CodePilot is an autonomous agent that turns GitHub issues into pull requests. No
 - **Safety Layer** — 16 security rules detect SQL injection, hardcoded secrets, XSS, SSRF and more
 - **Cost Aware** — Tracks every LLM call cost. Set a budget cap per run (default: $1.00)
 - **Job Queue** — BullMQ + Redis for reliable async processing with deduplication
+- **GitHub App** — Install on any repo. Webhook-driven with per-installation auth
+- **Free Tier** — 5 issues/month per installation with usage tracking
+- **Per-Repo Config** — Customize behavior via `.codepilot.yml` in your repo
+- **Multi-Repo** — Per-repo rate limiting and isolated vector stores
+- **Dashboard** — Next.js monitoring dashboard with real-time Supabase data
+- **Prometheus Metrics** — `/metrics` endpoint for Grafana/alerting
+- **VS Code Extension** — Resolve issues, monitor runs, get notifications from the editor
 - **Observable** — Structured logging (Pino), step-by-step timing, full cost breakdown
 
 ---
@@ -84,45 +94,294 @@ CodePilot is an autonomous agent that turns GitHub issues into pull requests. No
 
 ## Quick Start
 
+### Prerequisites
+
+- Node.js 20+
+- Docker and Docker Compose
+- At least one LLM API key (Anthropic or OpenAI)
+
+### 1. Clone and install
+
 ```bash
-# Clone
 git clone https://github.com/PauloCocato/codepilot.git && cd codepilot
-
-# Install
 npm install
+```
 
-# Configure (add your API keys)
+### 2. Configure environment
+
+```bash
 cp .env.example .env
+```
 
-# Build
+Edit `.env` with your API keys:
+
+```env
+# Required - LLM (at least one)
+ANTHROPIC_API_KEY=sk-ant-xxx
+OPENAI_API_KEY=sk-xxx
+
+# Required - GitHub App (see "GitHub App Setup" section)
+GITHUB_APP_ID=12345
+GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_WEBHOOK_SECRET=your-webhook-secret
+
+# Optional
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+REDIS_URL=redis://localhost:6379
+CHROMA_URL=http://localhost:8000
+MAX_COST_USD=1.00
+LOG_LEVEL=info
+```
+
+### 3. Start infrastructure
+
+```bash
+docker compose up -d postgres redis chromadb
+```
+
+### 4. Create database tables
+
+Run these SQL files in your PostgreSQL/Supabase:
+
+```bash
+# Core tables (agent runs, steps, LLM usage)
+psql -f apps/agent/src/db/schema.sql
+
+# Installation and usage tracking tables
+psql -f apps/agent/src/db/schema-installations.sql
+```
+
+Or paste them in Supabase Dashboard > SQL Editor.
+
+### 5. Build and run
+
+```bash
 npm run build
-
-# Run
 npm run dev --workspace=apps/agent
 ```
 
-The agent starts a Fastify server on `http://localhost:3000` with:
-- `POST /api/queue/enqueue` — Submit an issue for resolution
-- `GET /api/queue/stats` — Queue statistics
-- `GET /api/queue/jobs` — Recent jobs
-- `GET /api/health` — Health check
+The agent starts on `http://localhost:3000`.
 
 ---
 
-## Configuration
+## GitHub App Setup
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `ANTHROPIC_API_KEY` | Yes* | — | Claude API key |
-| `OPENAI_API_KEY` | Yes* | — | OpenAI API key (fallback) |
-| `GITHUB_TOKEN` | Yes | — | GitHub token with repo scope |
-| `GITHUB_WEBHOOK_SECRET` | Yes | — | Webhook signature secret |
-| `REDIS_URL` | No | `redis://localhost:6379` | Redis for job queue |
-| `CHROMA_URL` | No | `http://localhost:8000` | Vector DB URL |
-| `MAX_COST_USD` | No | `1.00` | Budget cap per run (USD) |
-| `LOG_LEVEL` | No | `info` | `debug` / `info` / `warn` / `error` |
+### 1. Register a GitHub App
 
-\* At least one LLM key required. Both set = Claude primary + OpenAI fallback.
+Go to **GitHub > Settings > Developer Settings > GitHub Apps > New GitHub App**:
+
+| Field | Value |
+|-------|-------|
+| Name | Your app name (e.g., `my-codepilot`) |
+| Homepage URL | `https://github.com/PauloCocato/codepilot` |
+| Webhook URL | `https://YOUR-DOMAIN/webhook` |
+| Webhook Secret | Generate with `openssl rand -hex 32` |
+
+### 2. Set permissions
+
+| Permission | Access |
+|-----------|--------|
+| Issues | Read & Write |
+| Pull Requests | Read & Write |
+| Contents | Read & Write |
+| Metadata | Read |
+
+### 3. Subscribe to events
+
+- Issues
+- Issue comment
+- Installation
+
+### 4. Download the private key
+
+After creating the app, click **Generate a private key**. Save the `.pem` file and add it to your `.env`.
+
+### 5. Install on a repo
+
+Visit `https://github.com/apps/YOUR-APP-NAME/installations/new` and select your repos.
+
+### 6. Test it
+
+Create an issue in your repo with the label `codepilot` (or your configured trigger label). CodePilot will:
+1. Receive the webhook
+2. Enqueue the job
+3. Analyze, plan, generate, test
+4. Open a PR
+
+---
+
+## Per-Repo Configuration
+
+Add a `.codepilot.yml` to your repo root to customize behavior:
+
+```yaml
+# Label that triggers CodePilot (default: codepilot)
+trigger_label: codepilot
+
+# Maximum cost per run in USD (default: 1.00)
+max_cost_usd: 1.00
+
+# Auto-merge PRs if tests pass (default: false)
+auto_merge: false
+
+# Paths to exclude from indexing
+excluded_paths:
+  - "vendor/"
+  - "generated/"
+  - "*.min.js"
+```
+
+If the file is missing, defaults are used.
+
+---
+
+## VS Code Extension
+
+The VS Code extension lets you resolve issues and monitor runs from the editor.
+
+### Install
+
+```bash
+cd packages/vscode-extension
+npm run build
+npx vsce package
+code --install-extension codepilot-vscode-0.2.0.vsix
+```
+
+Or press **F5** in the extension folder to launch the Extension Development Host.
+
+### Features
+
+**Status Bar** — Shows connection status and active run count. Click to show runs.
+
+**Sidebar Panel** — TreeView with:
+- Active Runs (with real-time status)
+- Recent Runs (completed/failed)
+- Queue Stats (waiting, active, completed, failed)
+
+**Commands** (`Cmd+Shift+P`):
+
+| Command | Description |
+|---------|-------------|
+| `CodePilot: Resolve Issue` | Submit an issue URL or `owner/repo#123` for resolution |
+| `CodePilot: Show Active Runs` | Quick pick of active/waiting jobs |
+| `CodePilot: Show Run Details` | Full details of a run (cost, steps, PR link) |
+| `CodePilot: Configure Server` | Open extension settings |
+
+**Notifications** — Toast when a run completes (with clickable PR link) or fails.
+
+### Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `codepilot.serverUrl` | `http://localhost:3000` | Agent server URL |
+| `codepilot.pollingInterval` | `10` | Polling interval in seconds (3-120) |
+| `codepilot.notifications` | `true` | Show completion/failure notifications |
+
+---
+
+## Dashboard
+
+The Next.js dashboard provides a web UI for monitoring.
+
+```bash
+npm run dev --workspace=apps/dashboard
+```
+
+Opens on `http://localhost:3001` with:
+- **Home** — Stats cards (total runs, success rate, avg cost, active installations)
+- **Runs** — Paginated list of all agent runs with status, cost, timestamps
+- **Run Detail** — Step timeline, LLM usage breakdown, diff viewer, safety score
+- **Settings** — Configuration panel
+- **Landing Page** — `/landing` route with "Install on GitHub" CTA
+
+When `SUPABASE_URL` is configured, the dashboard shows real data. Otherwise, it falls back to demo data.
+
+---
+
+## Deployment
+
+### Docker Compose (recommended)
+
+```bash
+# Start everything (agent + postgres + redis + chromadb)
+docker compose up -d
+
+# View logs
+docker compose logs -f agent
+
+# Stop
+docker compose down
+```
+
+The `docker-compose.yml` includes:
+
+| Service | Port | Description |
+|---------|------|-------------|
+| `agent` | 3000 | CodePilot Fastify server |
+| `postgres` | 5432 | PostgreSQL database |
+| `redis` | 6379 | BullMQ job queue |
+| `chromadb` | 8000 | Vector database |
+
+### Webhook Exposure
+
+GitHub requires HTTPS for webhooks. Options:
+
+- **Production:** Reverse proxy (Caddy/nginx) with SSL
+- **Development:** `ngrok http 3000` for a temporary tunnel
+
+Update the Webhook URL in your GitHub App settings.
+
+---
+
+## API Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /api/health` | GET | Health check (`{ status, version, uptime }`) |
+| `POST /api/queue/enqueue` | POST | Submit issue for resolution |
+| `GET /api/queue/stats` | GET | Queue statistics (waiting, active, completed, failed) |
+| `GET /api/queue/jobs` | GET | Recent jobs (`?limit=20`) |
+| `GET /api/queue/jobs/:id` | GET | Job status and details |
+| `GET /api/repos` | GET | List registered repos with config and rate limits |
+| `GET /api/repos/:owner/:repo` | GET | Specific repo info |
+| `GET /api/stats` | GET | Agent stats (total runs, success rate, cost) |
+| `GET /metrics` | GET | Prometheus metrics |
+| `POST /webhook` | POST | GitHub webhook receiver (signature-verified) |
+
+### Enqueue Example
+
+```bash
+curl -X POST http://localhost:3000/api/queue/enqueue \
+  -H "Content-Type: application/json" \
+  -d '{
+    "issueUrl": "https://github.com/owner/repo/issues/42",
+    "repoOwner": "owner",
+    "repoName": "repo",
+    "issueNumber": 42,
+    "triggeredBy": "api",
+    "installationId": 12345
+  }'
+```
+
+### Prometheus Metrics
+
+Available at `GET /metrics`:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `codepilot_runs_total` | Counter | Total agent runs (by status, trigger) |
+| `codepilot_run_duration_seconds` | Histogram | Run duration |
+| `codepilot_run_cost_usd` | Histogram | Cost per run |
+| `codepilot_llm_requests_total` | Counter | LLM API calls (by provider, model) |
+| `codepilot_llm_tokens_total` | Counter | Tokens used (by provider, direction) |
+| `codepilot_llm_cost_usd_total` | Counter | LLM cost (by provider) |
+| `codepilot_llm_latency_seconds` | Histogram | LLM latency |
+| `codepilot_queue_depth` | Gauge | Queue depth (by state) |
+| `codepilot_safety_score` | Histogram | Safety evaluation scores |
+| `codepilot_safety_violations_total` | Counter | Safety violations (by category) |
+| `codepilot_active_installations` | Gauge | Active GitHub App installations |
 
 ---
 
@@ -136,16 +395,18 @@ codepilot/
     agent/src/
       agent/        # Orchestration: loop, planner, generator, critic, runner
       llm/          # Multi-provider adapters (Claude, OpenAI, Router)
-      github/       # Issues, repos, PRs, webhook handler
+      github/       # App auth, issues, repos, PRs, webhook, config reader
       indexer/      # Code chunking, embeddings, vector search
       sandbox/      # Docker isolation with security hardening
       safety/       # 16 security rules (injection, secrets, SSRF, XSS...)
       queue/        # BullMQ job queue with deduplication
       db/           # PostgreSQL/Supabase persistence layer
+      metrics/      # Prometheus metrics collector
       utils/        # Logging (Pino), config (Zod), cost tracking
-    dashboard/      # Next.js monitoring dashboard
+    dashboard/      # Next.js monitoring dashboard + landing page
   packages/
     shared/         # Shared TypeScript interfaces
+    vscode-extension/ # VS Code extension
   evals/            # SWE-bench evaluation suite
 ```
 
@@ -162,15 +423,39 @@ codepilot/
 
 ## Testing
 
-290 tests across 34 test files. Unit, integration, and E2E:
+413 tests across 43+ test files. Unit, integration, and E2E:
 
 ```bash
 npm run test          # All tests
-npm run typecheck     # Type safety
+npm run typecheck     # Type safety (6 packages)
 npm run lint          # Code quality
+npm run build         # Build all packages
 ```
 
 The E2E suite tests the full pipeline (parse -> plan -> generate -> critic) with both mock and real LLM calls.
+
+---
+
+## Configuration Reference
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `ANTHROPIC_API_KEY` | Yes* | — | Claude API key |
+| `OPENAI_API_KEY` | Yes* | — | OpenAI API key (fallback) |
+| `GITHUB_APP_ID` | Yes | — | GitHub App ID |
+| `GITHUB_PRIVATE_KEY` | Yes | — | GitHub App private key (PEM) |
+| `GITHUB_WEBHOOK_SECRET` | Yes | — | Webhook signature secret |
+| `SUPABASE_URL` | No | — | Supabase project URL |
+| `SUPABASE_ANON_KEY` | No | — | Supabase anonymous key |
+| `REDIS_URL` | No | `redis://localhost:6379` | Redis for job queue |
+| `CHROMA_URL` | No | `http://localhost:8000` | ChromaDB URL |
+| `MAX_COST_USD` | No | `1.00` | Budget cap per run (USD) |
+| `LOG_LEVEL` | No | `info` | `debug` / `info` / `warn` / `error` |
+| `PORT` | No | `3000` | Fastify server port |
+| `WORKER_CONCURRENCY` | No | `2` | BullMQ worker concurrency |
+| `GITHUB_APP_URL` | No | — | GitHub App install URL (for landing page) |
+
+\* At least one LLM key required. Both set = Claude primary + OpenAI fallback.
 
 ---
 
@@ -180,8 +465,8 @@ The E2E suite tests the full pipeline (parse -> plan -> generate -> critic) with
 - [x] Multi-LLM support (Claude + OpenAI)
 - [x] Docker sandbox with security hardening
 - [x] Safety evaluation layer (16 rules)
-- [x] BullMQ job queue
-- [x] PostgreSQL persistence
+- [x] BullMQ job queue with deduplication
+- [x] PostgreSQL persistence (Supabase)
 - [x] Next.js monitoring dashboard
 - [x] SWE-bench evaluation suite
 - [x] CI/CD (GitHub Actions)
