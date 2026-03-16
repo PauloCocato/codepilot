@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://github.com/PauloCocato/codepilot/actions/workflows/ci.yml"><img src="https://github.com/PauloCocato/codepilot/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
-  <img src="https://img.shields.io/badge/Tests-290%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-379%20passing-brightgreen" alt="Tests">
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript" alt="TypeScript"></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20%2B-green?logo=node.js" alt="Node.js"></a>
 </p>
@@ -185,11 +185,18 @@ The E2E suite tests the full pipeline (parse -> plan -> generate -> critic) with
 - [x] Next.js monitoring dashboard
 - [x] SWE-bench evaluation suite
 - [x] CI/CD (GitHub Actions)
-- [ ] GitHub App (install on any repo)
-- [ ] Real-time dashboard with live agent data
-- [ ] Prometheus metrics and alerting
-- [ ] Multi-repo support
+- [x] GitHub App authentication and webhook wiring
+- [x] Real-time dashboard with live Supabase data
+- [x] Prometheus metrics endpoint (`/metrics`)
+- [x] Multi-repo support with per-repo rate limiting
+- [x] Landing page for GitHub App installation
+- [x] Dockerfile and docker-compose for deployment
+- [x] `.codepilot.yml` per-repo configuration
+- [x] Installation management and free tier (5 issues/month)
 - [ ] VS Code extension
+- [ ] Grafana dashboard templates
+- [ ] Auto-merge support
+- [ ] Billing/paid tiers
 
 ---
 
