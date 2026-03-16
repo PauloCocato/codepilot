@@ -10,8 +10,9 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-166%20passing-brightgreen)]()
-[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue?logo=githubactions)]()
+[![Tests](https://img.shields.io/badge/Tests-290%20passing-brightgreen)]()
+[![CI](https://github.com/PauloCocato/codepilot/actions/workflows/ci.yml/badge.svg)](https://github.com/PauloCocato/codepilot/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green?logo=node.js)](https://nodejs.org/)
 
 ---
 
@@ -54,7 +55,7 @@ If tests fail, the agent retries with error feedback (up to 3 attempts). A criti
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/codepilot.git && cd codepilot
+git clone https://github.com/PauloCocato/codepilot.git && cd codepilot
 
 # 2. Install dependencies
 npm install
@@ -136,16 +137,21 @@ npm run build
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/my-feature`)
-3. Write tests first (TDD approach)
-4. Implement the feature
-5. Ensure `npm run test` and `npm run typecheck` pass
-6. Commit with conventional commits (`feat:`, `fix:`, `refactor:`, etc.)
-7. Open a pull request
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- Development setup
+- Branch naming and commit conventions
+- TDD workflow
+- Pull request process
 
 ---
 
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Acknowledgments
+
+Built with [Claude](https://www.anthropic.com/claude) and [Claude Code](https://claude.ai/claude-code).

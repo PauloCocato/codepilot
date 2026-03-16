@@ -1,6 +1,14 @@
 {
   "name": "codepilot",
   "version": "0.1.0",
+  "description": "AI agent that resolves GitHub issues automatically — parses issues, indexes code, generates patches, tests in Docker sandbox, and opens PRs.",
+  "author": "Paulo Cocato",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PauloCocato/codepilot.git"
+  },
+  "keywords": ["ai-agent", "github", "automation", "llm", "typescript", "codepilot"],
   "private": true,
   "workspaces": [
     "apps/*",
