@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Turborepo
+.turbo/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test coverage
+coverage/
+
+# Temporary
+tmp/
+/tmp/codepilot/
+
+# Claude worktrees
+.claude/worktrees/
+
+# Docker volumes
+postgres-data/
+redis-data/
+chroma-data/
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault

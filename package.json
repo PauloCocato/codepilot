@@ -1,0 +1,37 @@
+{
+  "name": "codepilot",
+  "version": "0.1.0",
+  "description": "AI agent that resolves GitHub issues automatically — parses issues, indexes code, generates patches, tests in Docker sandbox, and opens PRs.",
+  "author": "Paulo Cocato",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PauloCocato/codepilot.git"
+  },
+  "keywords": ["ai-agent", "github", "automation", "llm", "typescript", "codepilot"],
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "evals"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "test:unit": "turbo run test -- --run",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "turbo": "^2.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}

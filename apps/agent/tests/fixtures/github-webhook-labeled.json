@@ -1,0 +1,28 @@
+{
+  "action": "labeled",
+  "issue": {
+    "number": 42,
+    "title": "Login form crashes when email contains special characters",
+    "body": "The login form crashes with special characters in email.",
+    "labels": [
+      { "id": 1, "name": "bug" },
+      { "id": 5, "name": "codepilot" }
+    ]
+  },
+  "label": {
+    "id": 5,
+    "name": "codepilot"
+  },
+  "repository": {
+    "id": 123456,
+    "name": "my-app",
+    "full_name": "testorg/my-app",
+    "owner": {
+      "login": "testorg"
+    }
+  },
+  "sender": {
+    "login": "maintainer",
+    "id": 99999
+  }
+}

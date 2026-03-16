@@ -1,0 +1,11 @@
+{
+  "number": 99,
+  "title": "Fix typo in README",
+  "body": "There's a typo on line 5.",
+  "labels": [],
+  "state": "open",
+  "user": {
+    "login": "contributor",
+    "id": 67890
+  }
+}

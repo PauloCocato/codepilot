@@ -1,0 +1,27 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 42,
+    "title": "Login form crashes when email contains special characters"
+  },
+  "comment": {
+    "id": 777,
+    "body": "/codepilot please fix this issue",
+    "user": {
+      "login": "maintainer",
+      "id": 99999
+    }
+  },
+  "repository": {
+    "id": 123456,
+    "name": "my-app",
+    "full_name": "testorg/my-app",
+    "owner": {
+      "login": "testorg"
+    }
+  },
+  "sender": {
+    "login": "maintainer",
+    "id": 99999
+  }
+}
