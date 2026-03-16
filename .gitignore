@@ -37,3 +37,8 @@ tmp/
 postgres-data/
 redis-data/
 chroma-data/
+
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
