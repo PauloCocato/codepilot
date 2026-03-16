@@ -12,6 +12,7 @@ import {
   type ResolveIssueJob,
 } from "./queue/index.js";
 import { createWebhookHandler } from "./github/app.js";
+import { registry } from "./metrics/index.js";
 import { WebhookQueueAdapter } from "./github/queue-adapter.js";
 
 const app = Fastify({
@@ -35,6 +36,11 @@ app.get("/api/health", async () => ({
   version: "0.1.0",
   uptime: process.uptime(),
 }));
+
+app.get("/metrics", async (_request, reply) => {
+  reply.header("Content-Type", registry.contentType);
+  return registry.metrics();
+});
 
 app.get("/api/stats", async () => ({
   ...stats,
