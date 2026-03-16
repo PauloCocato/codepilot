@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Header } from '@/components/header';
 import { StatusBadge } from '@/components/status-badge';
-import { fetchRuns } from '@/lib/api';
+import { fetchRuns } from '@/lib/data';
 
 function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -22,8 +22,18 @@ function formatDate(iso: string): string {
   });
 }
 
-export default async function RunsPage() {
-  const runs = await fetchRuns();
+interface RunsPageProps {
+  readonly searchParams: Promise<{ page?: string }>;
+}
+
+export default async function RunsPage({ searchParams }: RunsPageProps) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params.page) || 1);
+  const limit = 20;
+  const offset = (page - 1) * limit;
+
+  const { runs, total } = await fetchRuns(limit, offset);
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="flex flex-col">
@@ -118,6 +128,33 @@ export default async function RunsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-zinc-800 px-6 py-4">
+              <span className="text-sm text-zinc-500">
+                Showing {offset + 1}–{Math.min(offset + limit, total)} of {total} runs
+              </span>
+              <div className="flex gap-2">
+                {page > 1 && (
+                  <Link
+                    href={`/runs?page=${page - 1}`}
+                    className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-800"
+                  >
+                    Previous
+                  </Link>
+                )}
+                {page < totalPages && (
+                  <Link
+                    href={`/runs?page=${page + 1}`}
+                    className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-800"
+                  >
+                    Next
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

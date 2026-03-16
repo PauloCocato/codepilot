@@ -1,57 +1,42 @@
-import { MOCK_RUNS, MOCK_STATS } from './mock-data';
-import type { Run, Stats } from './mock-data';
+import { fetchRuns as fetchRunsFromData, fetchRunById, fetchStats as fetchStatsFromData } from './data';
+import type { Run } from './mock-data';
+import type { DashboardStats } from './data';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 /**
- * Fetch stats from the agent API.
- * Currently returns mock data — real integration coming later.
+ * Fetch stats from the data layer (Supabase or mock fallback).
  */
-export async function fetchStats(): Promise<Stats> {
-  // TODO: replace with real API call
-  // const res = await fetch(`${BASE_URL}/api/stats`);
-  // if (!res.ok) throw new Error(`Failed to fetch stats: ${res.statusText}`);
-  // return res.json();
-  void BASE_URL;
-  return Promise.resolve(MOCK_STATS);
+export async function fetchStats(): Promise<DashboardStats> {
+  return fetchStatsFromData();
 }
 
 /**
- * Fetch all runs from the agent API.
- * Currently returns mock data.
+ * Fetch all runs from the data layer.
  */
 export async function fetchRuns(): Promise<readonly Run[]> {
-  // TODO: replace with real API call
-  void BASE_URL;
-  return Promise.resolve(MOCK_RUNS);
+  const { runs } = await fetchRunsFromData(50, 0);
+  return runs;
 }
 
 /**
  * Fetch a single run by ID.
- * Currently returns mock data.
  */
 export async function fetchRun(id: string): Promise<Run | undefined> {
-  // TODO: replace with real API call
-  // const res = await fetch(`${BASE_URL}/api/runs/${id}`);
-  void BASE_URL;
-  const run = MOCK_RUNS.find((r) => r.id === id);
-  return Promise.resolve(run);
+  const run = await fetchRunById(id);
+  return run ?? undefined;
 }
 
 /**
  * Trigger resolution of a GitHub issue.
- * Currently returns mock data.
+ * Still requires the agent API — not yet connected to Supabase.
  */
 export async function resolveIssue(issueUrl: string): Promise<Run> {
-  // TODO: replace with real API call
-  // const res = await fetch(`${BASE_URL}/api/resolve`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ issueUrl }),
-  // });
-  // if (!res.ok) throw new Error(`Failed to resolve issue: ${res.statusText}`);
-  // return res.json();
-  void BASE_URL;
-  void issueUrl;
-  return Promise.resolve(MOCK_RUNS[0]);
+  const res = await fetch(`${BASE_URL}/api/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issueUrl }),
+  });
+  if (!res.ok) throw new Error(`Failed to resolve issue: ${res.statusText}`);
+  return res.json() as Promise<Run>;
 }

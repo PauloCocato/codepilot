@@ -4,7 +4,7 @@ import { Header } from '@/components/header';
 import { StatusBadge } from '@/components/status-badge';
 import { StepTimeline } from '@/components/step-timeline';
 import { DiffViewer } from '@/components/diff-viewer';
-import { fetchRun } from '@/lib/api';
+import { fetchRunById } from '@/lib/data';
 
 function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -32,11 +32,13 @@ interface RunDetailPageProps {
 
 export default async function RunDetailPage({ params }: RunDetailPageProps) {
   const { id } = await params;
-  const run = await fetchRun(id);
+  const run = await fetchRunById(id);
 
   if (!run) {
     notFound();
   }
+
+  const totalLlmCost = run.llmUsage.reduce((sum, u) => sum + u.costUsd, 0);
 
   return (
     <div className="flex flex-col">
@@ -142,11 +144,56 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
           <StepTimeline steps={run.steps} />
         </div>
 
+        {/* LLM Usage Breakdown */}
+        {run.llmUsage.length > 0 && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+            <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-zinc-500">
+              LLM Usage — ${totalLlmCost.toFixed(4)} total
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                    <th className="px-4 py-2">Provider</th>
+                    <th className="px-4 py-2">Model</th>
+                    <th className="px-4 py-2">Purpose</th>
+                    <th className="px-4 py-2 text-right">Input</th>
+                    <th className="px-4 py-2 text-right">Output</th>
+                    <th className="px-4 py-2 text-right">Cost</th>
+                    <th className="px-4 py-2 text-right">Latency</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/50">
+                  {run.llmUsage.map((usage, i) => (
+                    <tr key={i} className="text-sm">
+                      <td className="px-4 py-2 text-zinc-300">{usage.provider}</td>
+                      <td className="px-4 py-2 font-mono text-xs text-zinc-400">{usage.model}</td>
+                      <td className="px-4 py-2 text-zinc-400">{usage.purpose ?? '--'}</td>
+                      <td className="px-4 py-2 text-right text-zinc-400">{usage.inputTokens.toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right text-zinc-400">{usage.outputTokens.toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right text-zinc-300">${usage.costUsd.toFixed(4)}</td>
+                      <td className="px-4 py-2 text-right text-zinc-400">{formatDuration(usage.latencyMs)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Diff Viewer */}
         {run.patch && (
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
             <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-zinc-500">Generated Patch</h3>
             <DiffViewer patch={run.patch} />
+          </div>
+        )}
+
+        {/* Explanation */}
+        {run.explanation && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+            <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-zinc-500">Explanation</h3>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">{run.explanation}</p>
           </div>
         )}
 

@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { Header } from '@/components/header';
 import { StatCard } from '@/components/stat-card';
 import { StatusBadge } from '@/components/status-badge';
-import { fetchStats, fetchRuns } from '@/lib/api';
+import { fetchStats, fetchRecentActivity } from '@/lib/data';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -23,16 +24,15 @@ function formatDate(iso: string): string {
 }
 
 export default async function DashboardPage() {
-  const [stats, runs] = await Promise.all([fetchStats(), fetchRuns()]);
-
-  const successRate = stats.totalRuns > 0
-    ? Math.round((stats.successfulRuns / stats.totalRuns) * 100)
-    : 0;
+  const [stats, recentRuns] = await Promise.all([
+    fetchStats(),
+    fetchRecentActivity(10),
+  ]);
 
   const successRateColor: 'green' | 'yellow' | 'red' =
-    successRate >= 80 ? 'green' : successRate >= 60 ? 'yellow' : 'red';
+    stats.successRate >= 80 ? 'green' : stats.successRate >= 60 ? 'yellow' : 'red';
 
-  const recentRuns = runs.slice(0, 10);
+  const usingMockData = !isSupabaseConfigured();
 
   return (
     <div className="flex flex-col">
@@ -42,6 +42,15 @@ export default async function DashboardPage() {
       />
 
       <div className="space-y-8 p-8">
+        {/* Mock data banner */}
+        {usingMockData && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+            Configure <code className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-xs">SUPABASE_URL</code> and{' '}
+            <code className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-xs">SUPABASE_ANON_KEY</code> to see real data.
+            Showing demo data.
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
@@ -57,8 +66,8 @@ export default async function DashboardPage() {
           />
           <StatCard
             label="Success Rate"
-            value={`${successRate}%`}
-            trend={successRate >= 80 ? 'Above target' : 'Below target'}
+            value={`${stats.successRate}%`}
+            trend={stats.successRate >= 80 ? 'Above target' : 'Below target'}
             trendColor={successRateColor}
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -69,7 +78,7 @@ export default async function DashboardPage() {
           <StatCard
             label="Total Cost"
             value={`$${stats.totalCostUsd.toFixed(2)}`}
-            trend="~$0.31 per run"
+            trend={stats.totalRuns > 0 ? `~$${stats.avgCostUsd.toFixed(2)} per run` : 'No runs yet'}
             trendColor="green"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -80,7 +89,7 @@ export default async function DashboardPage() {
           <StatCard
             label="Active Runs"
             value={stats.activeRuns}
-            trend="2 in progress"
+            trend={`${stats.activeRuns} in progress`}
             trendColor="green"
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
