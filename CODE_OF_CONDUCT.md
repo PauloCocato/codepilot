@@ -30,7 +30,7 @@ Examples of unacceptable behavior:
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders at **conduct@codepilot.dev**.
+reported to the community leaders at **paulo.cocato@gmail.com**.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
