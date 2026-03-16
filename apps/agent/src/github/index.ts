@@ -36,6 +36,14 @@ export {
 export type { CreatePRParams, CreatePRResult } from "./prs.js";
 
 export {
+  readRepoConfig,
+  clearConfigCache,
+  RepoConfigSchema,
+  DEFAULT_REPO_CONFIG,
+} from "./config-reader.js";
+export type { RepoConfig } from "./config-reader.js";
+
+export {
   createWebhookHandler,
   incrementActiveJobs,
   decrementActiveJobs,
@@ -48,3 +56,5 @@ export type {
   WebhookHandlerOptions,
   WebhookTrigger,
 } from "./app.js";
+
+export { WebhookQueueAdapter } from "./queue-adapter.js";
