@@ -45,3 +45,4 @@ chroma-data/
 .flaskenv*
 !.env.project
 !.env.vault
+!.env.example
