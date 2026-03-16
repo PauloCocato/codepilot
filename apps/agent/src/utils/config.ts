@@ -3,9 +3,10 @@ import { z } from "zod";
 const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
-  GITHUB_APP_ID: z.string().optional(),
-  GITHUB_PRIVATE_KEY: z.string().optional(),
-  GITHUB_WEBHOOK_SECRET: z.string().optional(),
+  GITHUB_APP_ID: z.string().min(1),
+  GITHUB_PRIVATE_KEY: z.string().min(1),
+  GITHUB_WEBHOOK_SECRET: z.string().min(1),
+  GITHUB_APP_URL: z.string().url().optional(),
   LLM_PRIMARY_PROVIDER: z.enum(["claude", "openai"]).default("claude"),
   LLM_FALLBACK_PROVIDER: z.enum(["claude", "openai", "none"]).default("openai"),
   VECTOR_DB: z.enum(["chroma", "pinecone"]).default("chroma"),

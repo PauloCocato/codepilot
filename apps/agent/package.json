@@ -17,6 +17,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "@codepilot/shared": "*",
+    "@octokit/auth-app": "^7.0.0",
     "@octokit/rest": "^21.0.0",
     "@octokit/webhooks": "^13.0.0",
     "bullmq": "^5.0.0",
