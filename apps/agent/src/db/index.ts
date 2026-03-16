@@ -1,22 +1,33 @@
-export { getSupabaseClient, checkDatabaseHealth, resetClient } from './client.js';
-export { AgentRunRepository } from './repositories/runs.js';
-export { RunStepRepository } from './repositories/steps.js';
-export { LLMUsageRepository } from './repositories/llm-usage.js';
+export {
+  getSupabaseClient,
+  checkDatabaseHealth,
+  resetClient,
+} from "./client.js";
+export { AgentRunRepository } from "./repositories/runs.js";
+export { RunStepRepository } from "./repositories/steps.js";
+export { LLMUsageRepository } from "./repositories/llm-usage.js";
+export { InstallationRepository } from "./repositories/installations.js";
+export { UsageRepository } from "./repositories/usage.js";
 export {
   // Row types
   type AgentRunRow,
   type AgentRunStepRow,
   type LLMUsageRow,
+  type InstallationRow,
+  type UsageRecordRow,
   // Insert/update types
   type InsertAgentRun,
   type UpdateAgentRun,
   type InsertRunStep,
   type CompleteRunStep,
   type InsertLLMUsage,
+  type InsertInstallation,
+  type InsertUsageRecord,
   // Aggregate types
   type AgentRunWithSteps,
   type AgentRunStats,
   type ProviderStats,
+  type UsageLimitResult,
   // Result pattern
   type DbResult,
   DatabaseError,
@@ -26,6 +37,8 @@ export {
   insertRunStepSchema,
   completeRunStepSchema,
   insertLLMUsageSchema,
+  insertInstallationSchema,
+  insertUsageRecordSchema,
   // Enums
   AgentRunStatus,
   TriggeredBy,
@@ -33,4 +46,6 @@ export {
   StepStatus,
   LLMProvider,
   LLMPurpose,
-} from './types.js';
+  InstallationStatus,
+  UsageRecordStatus,
+} from "./types.js";
