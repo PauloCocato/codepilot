@@ -1,0 +1,66 @@
+{
+  "name": "codepilot-vscode",
+  "displayName": "CodePilot",
+  "description": "AI agent that resolves GitHub issues automatically",
+  "version": "0.2.0",
+  "publisher": "paulococato",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "codepilot.resolveIssue", "title": "CodePilot: Resolve Issue" },
+      { "command": "codepilot.showActiveRuns", "title": "CodePilot: Show Active Runs" },
+      { "command": "codepilot.showRunDetails", "title": "CodePilot: Show Run Details" },
+      { "command": "codepilot.configureServer", "title": "CodePilot: Configure Server" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "codepilot", "title": "CodePilot", "icon": "resources/codepilot-icon.svg" }
+      ]
+    },
+    "views": {
+      "codepilot": [
+        { "id": "codepilotRuns", "name": "Runs" }
+      ]
+    },
+    "configuration": {
+      "title": "CodePilot",
+      "properties": {
+        "codepilot.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of the CodePilot agent server"
+        },
+        "codepilot.pollingInterval": {
+          "type": "number",
+          "default": 10,
+          "minimum": 3,
+          "maximum": 120,
+          "description": "Polling interval in seconds"
+        },
+        "codepilot.notifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications when runs complete or fail"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "dev": "node esbuild.mjs --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "package": "vsce package",
+    "lint": "echo 'no lint configured'"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
